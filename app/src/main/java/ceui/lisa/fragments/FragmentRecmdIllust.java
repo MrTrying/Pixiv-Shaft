@@ -117,14 +117,10 @@ public class FragmentRecmdIllust extends NetListFragment<FragmentBaseListBinding
             if (allItems != null) {
                 if (allItems.size() >= 20) {
                     for (int i = 0; i < 20; i++) {
-                        Common.showLog(className + "uuu 写入第" + i + "条数据" +
-                                allItems.get(i).getTitle());
                         insertViewHistory(allItems.get(i));
                     }
                 } else {
                     for (int i = 0; i < allItems.size(); i++) {
-                        Common.showLog(className + "bbb 写入第" + i + "条数据" +
-                                allItems.get(i).getTitle());
                         insertViewHistory(allItems.get(i));
                     }
                 }
@@ -154,7 +150,7 @@ public class FragmentRecmdIllust extends NetListFragment<FragmentBaseListBinding
     public void showDataBase() {
         Observable.create((ObservableOnSubscribe<List<IllustRecmdEntity>>) emitter -> {
             List<IllustRecmdEntity> temp = AppDatabase.getAppDatabase(mContext).recmdDao().getAll();
-            Thread.sleep(500);
+            Thread.sleep(100);
             emitter.onNext(temp);
             emitter.onComplete();
         }).subscribeOn(Schedulers.io())
@@ -185,16 +181,5 @@ public class FragmentRecmdIllust extends NetListFragment<FragmentBaseListBinding
                         baseBind.refreshLayout.setRefreshFooter(new FalsifyFooter(mContext));
                     }
                 });
-    }
-
-    @Override
-    public boolean eventBusEnable() {
-        return true;
-    }
-
-    @Override
-    public void handleEvent(Channel channel) {
-        Common.showLog(className + "正在刷新");
-        nowRefresh();
     }
 }

@@ -1,6 +1,7 @@
 package ceui.lisa.fragments;
 
 import android.content.Intent;
+import android.text.TextUtils;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
 import android.view.LayoutInflater;
@@ -22,6 +23,7 @@ import ceui.lisa.database.UserEntity;
 import ceui.lisa.databinding.FragmentLocalUserBinding;
 import ceui.lisa.http.ErrorCtrl;
 import ceui.lisa.models.UserModel;
+import ceui.lisa.utils.Base64Util;
 import ceui.lisa.utils.Common;
 import ceui.lisa.utils.Dev;
 import ceui.lisa.utils.GlideUtil;
@@ -53,15 +55,6 @@ public class FragmentLocalUsers extends BaseFragment<FragmentLocalUserBinding> {
                 mActivity.finish();
             }
         });
-        baseBind.loginOut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(mContext, TemplateActivity.class);
-                intent.putExtra(TemplateActivity.EXTRA_FRAGMENT, "登录注册");
-                startActivity(intent);
-            }
-        });
-
         baseBind.addUser.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -145,6 +138,11 @@ public class FragmentLocalUsers extends BaseFragment<FragmentLocalUserBinding> {
             @Override
             public void onClick(View v) {
                 userModel.getResponse().setLocal_user(Params.USER_KEY);
+                //生成加密后的密码
+                String secretPassword = Base64Util.encode(userModel.getResponse().getUser().getPassword());
+                //添加一个标识，是已加密的密码
+                String passwordWithSign = Params.SECRET_PWD_KEY + secretPassword;
+                userModel.getResponse().getUser().setPassword(passwordWithSign);
                 String userJson = Shaft.sGson.toJson(userModel);
                 Common.copy(mContext, userJson, false);
                 Common.showToast("已导出到剪切板", exp);

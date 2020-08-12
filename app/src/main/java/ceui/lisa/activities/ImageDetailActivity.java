@@ -1,21 +1,13 @@
 package ceui.lisa.activities;
 
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
-import android.provider.DocumentsContract;
 import android.util.Log;
 import android.view.DisplayCutout;
 import android.view.View;
-import android.view.ViewTreeObserver;
-import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
@@ -28,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ceui.lisa.R;
+import ceui.lisa.base.BaseActivity;
 import ceui.lisa.databinding.ActivityImageDetailBinding;
 import ceui.lisa.download.IllustDownload;
 import ceui.lisa.fragments.FragmentImageDetail;
@@ -85,7 +78,7 @@ public class ImageDetailActivity extends BaseActivity<ActivityImageDetailBinding
         }
         String dataType = getIntent().getStringExtra("dataType");
         baseBind.viewPager.setPageTransformer(true, new CubeOutTransformer());
-        if (dataType.equals("二级详情")) {
+        if ("二级详情".equals(dataType)) {
             currentSize = findViewById(R.id.current_size);
             currentPage = findViewById(R.id.current_page);
             downloadSingle = findViewById(R.id.download_this_one);
@@ -130,7 +123,7 @@ public class ImageDetailActivity extends BaseActivity<ActivityImageDetailBinding
             });
             currentPage.setText("第" + (index + 1) + "P / 共" + mIllustsBean.getPage_count() + "P");
 
-        } else if (dataType.equals("下载详情")) {
+        } else if ("下载详情".equals(dataType)) {
 
             currentPage = findViewById(R.id.current_page);
             downloadSingle = findViewById(R.id.download_this_one);

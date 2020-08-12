@@ -4,9 +4,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
+
+import androidx.appcompat.widget.Toolbar;
 
 import com.blankj.utilcode.util.BarUtils;
 import com.blankj.utilcode.util.PathUtils;
@@ -68,6 +71,17 @@ public class FragmentNovelHolder extends BaseFragment<FragmentNovelHolderBinding
     @Override
     public void initView(View view) {
         BarUtils.setNavBarColor(mActivity, getResources().getColor(R.color.hito_bg));
+        baseBind.toolbar.inflateMenu(R.menu.change_color);
+        baseBind.toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                if (item.getItemId() == R.id.action_add) {
+                    Common.showToast("开发中");
+                    //setColor("#FF0000");
+                }
+                return false;
+            }
+        });
         baseBind.fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -175,6 +189,21 @@ public class FragmentNovelHolder extends BaseFragment<FragmentNovelHolderBinding
         getNovel(mNovelBean);
     }
 
+    private void setColor(String colorString) {
+        if (TextUtils.isEmpty(colorString)) {
+            Common.showToast("颜色值为空");
+            return;
+        }
+
+        if (!colorString.startsWith("#")) {
+            Common.showToast("不规范的颜色值");
+            return;
+        }
+
+
+        baseBind.relaRoot.setBackgroundColor(Integer.parseInt("FF0000"));
+    }
+
     private void getNovel(NovelBean novelBean) {
         PixivOperate.insertNovelViewHistory(novelBean);
         baseBind.viewPager.setVisibility(View.INVISIBLE);
@@ -217,14 +246,11 @@ public class FragmentNovelHolder extends BaseFragment<FragmentNovelHolderBinding
         });
         if (novelDetail.getNovel_text().contains("[newpage]")) {
             String[] partList = novelDetail.getNovel_text().split("\\[newpage]");
-            String temp = partList[0];
-            temp = "\n\n" + temp;
-            partList[0] = temp;
             baseBind.viewPager.setAdapter(new VAdapter(
                     Arrays.asList(partList), mContext));
         } else {
             baseBind.viewPager.setAdapter(new VAdapter(
-                    Collections.singletonList("\n\n" + novelDetail.getNovel_text()), mContext));
+                    Collections.singletonList(novelDetail.getNovel_text()), mContext));
         }
         if (novelDetail.getSeries_prev() != null && novelDetail.getSeries_prev().getId() != 0) {
             baseBind.showPrev.setVisibility(View.VISIBLE);

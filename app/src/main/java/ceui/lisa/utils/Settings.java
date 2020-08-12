@@ -48,7 +48,10 @@ public class Settings {
     private boolean relatedIllustNoLimit = true;
 
     //一级详情FragmentSingleIllust 图片显示原图
-    private boolean firstImageSize = false;
+    private boolean useOriginalImage = false;
+
+    //屏蔽，不显示已收藏的作品，默认不屏蔽
+    private boolean deleteStarIllust = false;
 
     //二级详情FragmentImageDetail 图片显示原图
     private boolean secondImageSize = true;
@@ -64,11 +67,11 @@ public class Settings {
 
     private boolean saveViewHistory = true;
 
-    private boolean doubleStaggerData = false;
+    //只允许一个任务处于下载中，用来保证下载顺序
+    private boolean singleDownloadTask = false;
 
-    private boolean staggerAnime = true;
-
-    private boolean gridAnime = true;
+    //作品详情使用新页面
+    private boolean useFragmentIllust = true;
 
     private String illustPath = "";
 
@@ -83,6 +86,10 @@ public class Settings {
     private boolean reverseDialogNeverShowAgain = false;
 
     private String appLanguage = "";
+
+    private String fileLastType = "png";
+
+    private String fileNameJson = "";
 
     public String getAppLanguage() {
         if(!TextUtils.isEmpty(appLanguage)){
@@ -116,20 +123,12 @@ public class Settings {
     public Settings() {
     }
 
-    public boolean isDoubleStaggerData() {
-        return doubleStaggerData;
+    public boolean isDeleteStarIllust() {
+        return deleteStarIllust;
     }
 
-    public void setDoubleStaggerData(boolean doubleStaggerData) {
-        this.doubleStaggerData = doubleStaggerData;
-    }
-
-    public boolean isGridAnime() {
-        return gridAnime;
-    }
-
-    public void setGridAnime(boolean gridAnime) {
-        this.gridAnime = gridAnime;
+    public void setDeleteStarIllust(boolean pDeleteStarIllust) {
+        deleteStarIllust = pDeleteStarIllust;
     }
 
     public boolean isSaveViewHistory() {
@@ -164,13 +163,6 @@ public class Settings {
         this.autoFuckChina = autoFuckChina;
     }
 
-    public boolean isStaggerAnime() {
-        return staggerAnime;
-    }
-
-    public void setStaggerAnime(boolean staggerAnime) {
-        this.staggerAnime = staggerAnime;
-    }
 
     public boolean isMainListAnimate() {
         return mainListAnimate;
@@ -178,6 +170,14 @@ public class Settings {
 
     public void setMainListAnimate(boolean mainListAnimate) {
         this.mainListAnimate = mainListAnimate;
+    }
+
+    public boolean isUseFragmentIllust() {
+        return useFragmentIllust;
+    }
+
+    public void setUseFragmentIllust(boolean useFragmentIllust) {
+        this.useFragmentIllust = useFragmentIllust;
     }
 
     public boolean isViewHistoryAnimate() {
@@ -197,11 +197,11 @@ public class Settings {
     }
 
     public boolean isFirstImageSize() {
-        return firstImageSize;
+        return useOriginalImage;
     }
 
     public void setFirstImageSize(boolean firstImageSize) {
-        this.firstImageSize = firstImageSize;
+        this.useOriginalImage = firstImageSize;
     }
 
     public boolean isSecondImageSize() {
@@ -294,5 +294,29 @@ public class Settings {
 
     public void setShowLikeButton(boolean pShowLikeButton) {
         showLikeButton = pShowLikeButton;
+    }
+
+    public String getFileLastType() {
+        return fileLastType;
+    }
+
+    public void setFileLastType(String fileLastType) {
+        this.fileLastType = fileLastType;
+    }
+
+    public String getFileNameJson() {
+        return fileNameJson;
+    }
+
+    public void setFileNameJson(String fileNameJson) {
+        this.fileNameJson = fileNameJson;
+    }
+
+    public boolean isSingleDownloadTask() {
+        return singleDownloadTask;
+    }
+
+    public void setSingleDownloadTask(boolean singleDownloadTask) {
+        this.singleDownloadTask = singleDownloadTask;
     }
 }

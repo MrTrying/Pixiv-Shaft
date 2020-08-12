@@ -1,6 +1,7 @@
 package ceui.lisa.activities;
 
 import android.content.Intent;
+import android.os.Bundle;
 import android.view.KeyEvent;
 
 import androidx.annotation.Nullable;
@@ -10,13 +11,16 @@ import androidx.fragment.app.FragmentManager;
 import com.blankj.utilcode.util.BarUtils;
 
 import ceui.lisa.R;
+import ceui.lisa.base.BaseActivity;
 import ceui.lisa.databinding.ActivityFragmentBinding;
 import ceui.lisa.fragments.FragmentAboutApp;
 import ceui.lisa.fragments.FragmentAnime;
-import ceui.lisa.fragments.FragmentColor;
+import ceui.lisa.fragments.FragmentBh;
+import ceui.lisa.fragments.FragmentFileName;
+import ceui.lisa.fragments.FragmentHttpTest;
 import ceui.lisa.fragments.FragmentListSimpleUser;
-import ceui.lisa.fragments.FragmentLock;
 import ceui.lisa.fragments.FragmentMultiDownld;
+import ceui.lisa.fragments.FragmentNew;
 import ceui.lisa.fragments.FragmentNewNovel;
 import ceui.lisa.fragments.FragmentNovelSeries;
 import ceui.lisa.fragments.FragmentRecmdIllust;
@@ -29,7 +33,6 @@ import ceui.lisa.fragments.FragmentDownload;
 import ceui.lisa.fragments.FragmentEditAccount;
 import ceui.lisa.fragments.FragmentEditFile;
 import ceui.lisa.fragments.FragmentFollowUser;
-import ceui.lisa.fragments.FragmentHitokoto;
 import ceui.lisa.fragments.FragmentHistory;
 import ceui.lisa.fragments.FragmentImageDetail;
 import ceui.lisa.fragments.FragmentLogin;
@@ -38,11 +41,9 @@ import ceui.lisa.fragments.FragmentLikeNovel;
 import ceui.lisa.fragments.FragmentLive;
 import ceui.lisa.fragments.FragmentLocalUsers;
 import ceui.lisa.fragments.FragmentMutedTags;
-import ceui.lisa.fragments.FragmentNew;
 import ceui.lisa.fragments.FragmentNiceFriend;
 import ceui.lisa.fragments.FragmentNovelHolder;
 import ceui.lisa.fragments.FragmentPv;
-import ceui.lisa.fragments.FragmentRecmdNovel;
 import ceui.lisa.fragments.FragmentRecmdUser;
 import ceui.lisa.fragments.FragmentRelatedIllust;
 import ceui.lisa.fragments.FragmentSearch;
@@ -56,6 +57,7 @@ import ceui.lisa.fragments.FragmentWebView;
 import ceui.lisa.fragments.FragmentWhoFollowThisUser;
 import ceui.lisa.models.IllustsBean;
 import ceui.lisa.models.NovelBean;
+import ceui.lisa.utils.Common;
 import ceui.lisa.utils.Dev;
 import ceui.lisa.utils.Params;
 import ceui.lisa.utils.ReverseResult;
@@ -65,11 +67,15 @@ public class TemplateActivity extends BaseActivity<ActivityFragmentBinding> {
     public static final String EXTRA_FRAGMENT = "dataType";
     public static final String EXTRA_KEYWORD = "keyword";
     protected Fragment childFragment;
+    private String dataType;
+
+    @Override
+    protected void initBundle(Bundle bundle) {
+        dataType = bundle.getString(EXTRA_FRAGMENT);
+    }
 
     protected Fragment createNewFragment() {
         Intent intent = getIntent();
-        String dataType = intent.getStringExtra(EXTRA_FRAGMENT);
-
         if (dataType != null) {
             switch (dataType) {
                 case "登录注册":
@@ -122,8 +128,6 @@ public class TemplateActivity extends BaseActivity<ActivityFragmentBinding> {
                     return new FragmentMultiDownld();
                 case "画廊":
                     return new FragmentWalkThrough();
-//                case "License":
-//                    return new FragmentLicense();
                 case "正在关注":
                     return FragmentFollowUser.newInstance(
                             getIntent().getIntExtra(Params.USER_ID, 0),
@@ -137,7 +141,12 @@ public class TemplateActivity extends BaseActivity<ActivityFragmentBinding> {
                 case "一言":
                     return FragmentAnime.newInstance();
                 case "最新作品":
-                    return new FragmentNew();
+                    if (Dev.isDev) {
+                        return new FragmentHttpTest();
+//                        return FragmentBh.newInstance();
+                    } else {
+                        return new FragmentNew();
+                    }
                 case "粉丝":
                     return FragmentWhoFollowThisUser.newInstance(intent.getIntExtra(Params.USER_ID, 0));
                 case "开发者预览":
@@ -182,6 +191,8 @@ public class TemplateActivity extends BaseActivity<ActivityFragmentBinding> {
                     return new FragmentLive();
                 case "标签屏蔽记录":
                     return new FragmentMutedTags();
+                case "修改命名方式":
+                    return FragmentFileName.newInstance();
                 default:
                     return new Fragment();
             }
@@ -234,6 +245,12 @@ public class TemplateActivity extends BaseActivity<ActivityFragmentBinding> {
 
     @Override
     public boolean hideStatusBar() {
-        return getIntent().getBooleanExtra("hideStatusBar", true);
+        if ("相关评论".equals(dataType) || "关于软件".equals(dataType)) {
+            Common.showLog(className + "不隐藏状态栏");
+            return false;
+        } else {
+            Common.showLog(className + "隐藏状态栏");
+            return getIntent().getBooleanExtra("hideStatusBar", true);
+        }
     }
 }

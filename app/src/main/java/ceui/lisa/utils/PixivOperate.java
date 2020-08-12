@@ -6,12 +6,18 @@ import android.content.Intent;
 import android.view.View;
 import android.widget.Button;
 
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import ceui.lisa.R;
 import ceui.lisa.activities.Shaft;
-import ceui.lisa.activities.ViewPagerActivity;
+import ceui.lisa.activities.VActivity;
+import ceui.lisa.core.Container;
+import ceui.lisa.core.PageData;
 import ceui.lisa.database.AppDatabase;
 import ceui.lisa.database.IllustHistoryEntity;
 import ceui.lisa.database.SearchEntity;
@@ -20,6 +26,7 @@ import ceui.lisa.fragments.FragmentLogin;
 import ceui.lisa.fragments.FragmentLikeIllust;
 import ceui.lisa.http.ErrorCtrl;
 import ceui.lisa.http.Retro;
+import ceui.lisa.model.ListIllust;
 import ceui.lisa.models.GifResponse;
 import ceui.lisa.models.IllustSearchResponse;
 import ceui.lisa.models.NovelBean;
@@ -58,6 +65,11 @@ public class PixivOperate {
                 .subscribe(new ErrorCtrl<NullResponse>() {
                     @Override
                     public void onNext(NullResponse nullResponse) {
+                        Intent intent = new Intent(Params.LIKED_USER);
+                        intent.putExtra(Params.ID, userID);
+                        intent.putExtra(Params.IS_LIKED, true);
+                        LocalBroadcastManager.getInstance(Shaft.getContext()).sendBroadcast(intent);
+
                         if (followType.equals(FragmentLikeIllust.TYPE_PUBLUC)) {
                             Common.showToast(getString(R.string.like_success_public));
                         } else {
@@ -75,36 +87,50 @@ public class PixivOperate {
                 .subscribe(new ErrorCtrl<NullResponse>() {
                     @Override
                     public void onNext(NullResponse nullResponse) {
+                        Intent intent = new Intent(Params.LIKED_USER);
+                        intent.putExtra(Params.ID, userID);
+                        intent.putExtra(Params.IS_LIKED, false);
+                        LocalBroadcastManager.getInstance(Shaft.getContext()).sendBroadcast(intent);
+
                         Common.showToast(getString(R.string.cancel_like));
                     }
                 });
     }
 
-    public static void postLike(IllustsBean illustsBean, UserModel userModel, String starType) {
+    public static void postLike(IllustsBean illustsBean, String starType) {
         if (illustsBean == null) {
             return;
         }
 
         if (illustsBean.isIs_bookmarked()) { //已收藏
             illustsBean.setIs_bookmarked(false);
-            Retro.getAppApi().postDislike(userModel.getResponse().getAccess_token(), illustsBean.getId())
+            Retro.getAppApi().postDislike(sUserModel.getResponse().getAccess_token(), illustsBean.getId())
                     .subscribeOn(Schedulers.newThread())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new ErrorCtrl<NullResponse>() {
                         @Override
                         public void onNext(NullResponse nullResponse) {
+                            Intent intent = new Intent(Params.LIKED_ILLUST);
+                            intent.putExtra(Params.ID, illustsBean.getId());
+                            intent.putExtra(Params.IS_LIKED, false);
+                            LocalBroadcastManager.getInstance(Shaft.getContext()).sendBroadcast(intent);
+
                             Common.showToast(getString(R.string.cancel_like_illust));
                         }
                     });
         } else { //没有收藏
             illustsBean.setIs_bookmarked(true);
-            Retro.getAppApi().postLike(userModel.getResponse().getAccess_token(), illustsBean.getId(), starType)
-                    .compose(RxThreadUtils.observableToMain())
+            Retro.getAppApi().postLike(sUserModel.getResponse().getAccess_token(), illustsBean.getId(), starType)
                     .subscribeOn(Schedulers.newThread())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new ErrorCtrl<NullResponse>() {
                         @Override
                         public void onNext(NullResponse nullResponse) {
+                            Intent intent = new Intent(Params.LIKED_ILLUST);
+                            intent.putExtra(Params.ID, illustsBean.getId());
+                            intent.putExtra(Params.IS_LIKED, true);
+                            LocalBroadcastManager.getInstance(Shaft.getContext()).sendBroadcast(intent);
+
                             Common.showToast(getString(R.string.like_illust_success));
                         }
                     });
@@ -124,6 +150,11 @@ public class PixivOperate {
                     .subscribe(new ErrorCtrl<NullResponse>() {
                         @Override
                         public void onNext(NullResponse nullResponse) {
+                            Intent intent = new Intent(Params.LIKED_NOVEL);
+                            intent.putExtra(Params.ID, novelBean.getId());
+                            intent.putExtra(Params.IS_LIKED, false);
+                            LocalBroadcastManager.getInstance(Shaft.getContext()).sendBroadcast(intent);
+
                             if(view instanceof Button){
                                 ((Button) view).setText("收藏");
                             }
@@ -138,6 +169,11 @@ public class PixivOperate {
                     .subscribe(new ErrorCtrl<NullResponse>() {
                         @Override
                         public void onNext(NullResponse nullResponse) {
+                            Intent intent = new Intent(Params.LIKED_NOVEL);
+                            intent.putExtra(Params.ID, novelBean.getId());
+                            intent.putExtra(Params.IS_LIKED, true);
+                            LocalBroadcastManager.getInstance(Shaft.getContext()).sendBroadcast(intent);
+
                             if(view instanceof Button){
                                 ((Button) view).setText("取消收藏");
                             }
@@ -156,12 +192,23 @@ public class PixivOperate {
                     public void onNext(IllustSearchResponse illustSearchResponse) {
                         if (illustSearchResponse != null) {
                             if (illustSearchResponse.getIllust() != null) {
-                                List<IllustsBean> tempList = new ArrayList<>();
-                                tempList.add(illustSearchResponse.getIllust());
-                                DataChannel.get().setIllustList(tempList);
-                                Intent intent = new Intent(context, ViewPagerActivity.class);
-                                intent.putExtra("position", 0);
+                                final String uuid = UUID.randomUUID().toString();
+                                final PageData pageData = new PageData(uuid,
+                                        Collections.singletonList(illustSearchResponse.getIllust()));
+                                Container.get().addPageToMap(pageData);
+
+                                Intent intent = new Intent(context, VActivity.class);
+                                intent.putExtra(Params.POSITION, 0);
+                                intent.putExtra(Params.PAGE_UUID, uuid);
                                 context.startActivity(intent);
+
+
+//                                List<IllustsBean> tempList = new ArrayList<>();
+//                                tempList.add(illustSearchResponse.getIllust());
+//                                DataChannel.get().setIllustList(tempList);
+//                                Intent intent = new Intent(context, ViewPagerActivity.class);
+//                                intent.putExtra("position", 0);
+//                                context.startActivity(intent);
                             } else {
                                 Common.showToast("illustSearchResponse.getIllust() 为空");
                             }
@@ -182,12 +229,16 @@ public class PixivOperate {
                     public void onNext(IllustSearchResponse illustSearchResponse) {
                         if (illustSearchResponse != null) {
                             if (illustSearchResponse.getIllust() != null) {
-                                List<IllustsBean> tempList = new ArrayList<>();
-                                tempList.add(illustSearchResponse.getIllust());
-                                DataChannel.get().setIllustList(tempList);
-                                Intent intent = new Intent(context, ViewPagerActivity.class);
-                                intent.putExtra("position", 0);
+                                final String uuid = UUID.randomUUID().toString();
+                                final PageData pageData = new PageData(uuid,
+                                        Collections.singletonList(illustSearchResponse.getIllust()));
+                                Container.get().addPageToMap(pageData);
+
+                                Intent intent = new Intent(context, VActivity.class);
+                                intent.putExtra(Params.POSITION, 0);
+                                intent.putExtra(Params.PAGE_UUID, uuid);
                                 context.startActivity(intent);
+
                                 if (callback != null) {
                                     callback.doSomething(null);
                                 }
@@ -278,5 +329,25 @@ public class PixivOperate {
         searchEntity.setId(searchEntity.getKeyword().hashCode() + searchEntity.getSearchType());
         Common.showLog("insertSearchHistory " + searchType + " " + searchEntity.getId());
         AppDatabase.getAppDatabase(Shaft.getContext()).searchDao().insert(searchEntity);
+    }
+
+    //筛选作品，只留下未收藏的作品
+    public static List<IllustsBean> getListWithoutBooked(ListIllust response) {
+        List<IllustsBean> result = new ArrayList<>();
+        if (response == null) {
+            return result;
+        }
+
+        if (response.getList() == null || response.getList().size() == 0) {
+            return result;
+        }
+
+        for (IllustsBean illustsBean : response.getList()) {
+            if (!illustsBean.isIs_bookmarked()) {
+                result.add(illustsBean);
+            }
+        }
+
+        return result;
     }
 }

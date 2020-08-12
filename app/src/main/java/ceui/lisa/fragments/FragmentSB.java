@@ -1,10 +1,18 @@
 package ceui.lisa.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import com.qmuiteam.qmui.skin.QMUISkinManager;
+import com.qmuiteam.qmui.widget.dialog.QMUIDialog;
+import com.qmuiteam.qmui.widget.dialog.QMUIDialogAction;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -19,13 +27,11 @@ import ceui.lisa.core.BaseRepo;
 import ceui.lisa.core.RemoteRepo;
 import ceui.lisa.databinding.FragmentSelectTagBinding;
 import ceui.lisa.databinding.RecySelectTagBinding;
-import ceui.lisa.dialogs.AddTagDialog;
 import ceui.lisa.http.ErrorCtrl;
 import ceui.lisa.http.Retro;
 import ceui.lisa.model.ListBookmarkTag;
 import ceui.lisa.models.NullResponse;
 import ceui.lisa.models.TagsBean;
-import ceui.lisa.utils.Channel;
 import ceui.lisa.utils.Common;
 import ceui.lisa.utils.Params;
 import io.reactivex.Observable;
@@ -36,6 +42,7 @@ public class FragmentSB extends NetListFragment<FragmentSelectTagBinding,
         ListBookmarkTag, TagsBean> {
 
     private int illustID;
+    private String lastClass = "";
 
     public static FragmentSB newInstance(int illustID) {
         Bundle args = new Bundle();
@@ -48,6 +55,11 @@ public class FragmentSB extends NetListFragment<FragmentSelectTagBinding,
     @Override
     public void initBundle(Bundle bundle) {
         illustID = bundle.getInt(Params.ILLUST_ID);
+    }
+
+    @Override
+    public void initActivityBundle(Bundle bundle) {
+        lastClass = bundle.getString(Params.LAST_CLASS);
     }
 
     @Override
@@ -115,10 +127,11 @@ public class FragmentSB extends NetListFragment<FragmentSelectTagBinding,
     }
 
     private void setFollowed() {
-        Channel channel = new Channel();
-        channel.setReceiver("FragmentSingleIllust starIllust");
-        channel.setObject(illustID);
-        EventBus.getDefault().post(channel);
+        //通知其他页面刷新，设置这个作品为已收藏
+        Intent intent = new Intent(Params.LIKED_ILLUST);
+        intent.putExtra(Params.ID, illustID);
+        intent.putExtra(Params.IS_LIKED, true);
+        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
         mActivity.finish();
     }
 
@@ -155,8 +168,30 @@ public class FragmentSB extends NetListFragment<FragmentSelectTagBinding,
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 if (item.getItemId() == R.id.action_add) {
-                    AddTagDialog dialog = AddTagDialog.newInstance(0);
-                    dialog.show(getChildFragmentManager(), "AddTagDialog");
+                    final QMUIDialog.EditTextDialogBuilder builder = new QMUIDialog.EditTextDialogBuilder(mActivity);
+                    builder.setTitle("添加标签")
+                            .setSkinManager(QMUISkinManager.defaultInstance(mContext))
+                            .setPlaceholder("请输入标签(收藏夹)名")
+                            .setInputType(InputType.TYPE_CLASS_TEXT)
+                            .addAction("取消", new QMUIDialogAction.ActionListener() {
+                                @Override
+                                public void onClick(QMUIDialog dialog, int index) {
+                                    dialog.dismiss();
+                                }
+                            })
+                            .addAction("添加", new QMUIDialogAction.ActionListener() {
+                                @Override
+                                public void onClick(QMUIDialog dialog, int index) {
+                                    CharSequence text = builder.getEditText().getText();
+                                    if (text != null && text.length() > 0) {
+                                        addTag(text.toString());
+                                        dialog.dismiss();
+                                    } else {
+                                        Toast.makeText(getActivity(), "请填入标签", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            })
+                            .show();
                     return true;
                 }
                 return false;

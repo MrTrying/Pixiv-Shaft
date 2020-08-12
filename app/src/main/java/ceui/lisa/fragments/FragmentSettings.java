@@ -13,11 +13,18 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.blankj.utilcode.util.LanguageUtils;
+import com.bumptech.glide.Glide;
 import com.facebook.rebound.SimpleSpringListener;
 import com.facebook.rebound.Spring;
 import com.facebook.rebound.SpringChain;
+import com.liulishuo.okdownload.core.dispatcher.DownloadDispatcher;
 import com.nononsenseapps.filepicker.FilePickerActivity;
 import com.nononsenseapps.filepicker.Utils;
+import com.qmuiteam.qmui.skin.QMUISkinManager;
+import com.qmuiteam.qmui.widget.dialog.QMUIDialog;
+import com.qmuiteam.qmui.widget.dialog.QMUIDialogAction;
+import com.scwang.smartrefresh.layout.SmartRefreshLayout;
+import com.scwang.smartrefresh.layout.api.RefreshHeader;
 import com.scwang.smartrefresh.layout.footer.FalsifyFooter;
 import com.scwang.smartrefresh.layout.header.FalsifyHeader;
 
@@ -30,6 +37,9 @@ import java.util.Locale;
 import ceui.lisa.R;
 import ceui.lisa.activities.Shaft;
 import ceui.lisa.activities.TemplateActivity;
+import ceui.lisa.base.BaseFragment;
+import ceui.lisa.base.Swipe;
+import ceui.lisa.base.SwipeFragment;
 import ceui.lisa.databinding.FragmentSettingsBinding;
 import ceui.lisa.helper.ThemeHelper;
 import ceui.lisa.utils.Channel;
@@ -43,13 +53,12 @@ import static ceui.lisa.fragments.FragmentFilter.THEME_NAME;
 import static ceui.lisa.utils.Settings.ALL_LANGUAGE;
 
 
-public class FragmentSettings extends BaseFragment<FragmentSettingsBinding> {
+public class FragmentSettings extends SwipeFragment<FragmentSettingsBinding> {
 
     private static final int illustPath_CODE = 10086;
     private static final int gifResultPath_CODE = 10087;
     private static final int gifZipPath_CODE = 10088;
     private static final int gifUnzipPath_CODE = 10089;
-    private boolean shouldRefreshFragmentRight = false;
 
     @Override
     public void initLayout() {
@@ -61,23 +70,33 @@ public class FragmentSettings extends BaseFragment<FragmentSettingsBinding> {
     }
 
     @Override
-    void initData() {
+    protected void initData() {
         baseBind.toolbar.setNavigationOnClickListener(view -> mActivity.finish());
         animate(baseBind.parentLinear);
 
         baseBind.loginOut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new AlertDialog.Builder(mContext)
-                        .setTitle(getString(R.string.login_out) + "?")
-                        .setPositiveButton(R.string.login_out, new DialogInterface.OnClickListener() {
+                new QMUIDialog.CheckBoxMessageDialogBuilder(getActivity())
+                        .setTitle("退出后是否删除账号信息?")
+                        .setMessage("删除账号信息")
+                        .setChecked(true)
+                        .setSkinManager(QMUISkinManager.defaultInstance(getContext()))
+                        .addAction("取消", new QMUIDialogAction.ActionListener() {
                             @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Common.logOut(mContext);
-                                mActivity.finish();
+                            public void onClick(QMUIDialog dialog, int index) {
+                                dialog.dismiss();
                             }
                         })
-                        .setNegativeButton(android.R.string.cancel, null)
+                        .addAction(R.string.login_out, new QMUIDialogAction.ActionListener() {
+                            @Override
+                            public void onClick(QMUIDialog dialog, int index) {
+                                Common.logOut(mContext);
+                                mActivity.finish();
+                                dialog.dismiss();
+                            }
+                        })
+                        .create()
                         .show();
             }
         });
@@ -129,24 +148,25 @@ public class FragmentSettings extends BaseFragment<FragmentSettingsBinding> {
             }
         });
 
-        shouldRefreshFragmentRight = Shaft.sSettings.isDoubleStaggerData();
-        baseBind.staggerData.setChecked(Shaft.sSettings.isDoubleStaggerData());
-        baseBind.staggerData.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        baseBind.singleDownloadTask.setChecked(Shaft.sSettings.isSingleDownloadTask());
+        baseBind.singleDownloadTask.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    Shaft.sSettings.setDoubleStaggerData(true);
+                    Shaft.sSettings.setSingleDownloadTask(true);
+                    DownloadDispatcher.setMaxParallelRunningCount(1);
                 } else {
-                    Shaft.sSettings.setDoubleStaggerData(false);
+                    Shaft.sSettings.setSingleDownloadTask(false);
+                    DownloadDispatcher.setMaxParallelRunningCount(5);
                 }
-                Common.showToast("设置成功", baseBind.staggerData);
+                Common.showToast("设置成功", baseBind.singleDownloadTask);
                 Local.setSettings(Shaft.sSettings);
             }
         });
-        baseBind.staggerDataRela.setOnClickListener(new View.OnClickListener() {
+        baseBind.singleDownloadTaskRela.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                baseBind.staggerData.performClick();
+                baseBind.singleDownloadTask.performClick();
             }
         });
 
@@ -167,6 +187,26 @@ public class FragmentSettings extends BaseFragment<FragmentSettingsBinding> {
             @Override
             public void onClick(View v) {
                 baseBind.showLikeButton.performClick();
+            }
+        });
+
+        baseBind.illustDetailUserNew.setChecked(Shaft.sSettings.isUseFragmentIllust());
+        baseBind.illustDetailUserNew.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    Shaft.sSettings.setUseFragmentIllust(true);
+                } else {
+                    Shaft.sSettings.setUseFragmentIllust(false);
+                }
+                Common.showToast("设置成功", baseBind.illustDetailUserNew);
+                Local.setSettings(Shaft.sSettings);
+            }
+        });
+        baseBind.illustDetailUserNewRela.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                baseBind.illustDetailUserNew.performClick();
             }
         });
 
@@ -227,6 +267,26 @@ public class FragmentSettings extends BaseFragment<FragmentSettingsBinding> {
             @Override
             public void onClick(View v) {
                 baseBind.firstDetailOrigin.performClick();
+            }
+        });
+
+        baseBind.deleteStarIllust.setChecked(Shaft.sSettings.isDeleteStarIllust());
+        baseBind.deleteStarIllust.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    Shaft.sSettings.setDeleteStarIllust(true);
+                } else {
+                    Shaft.sSettings.setDeleteStarIllust(false);
+                }
+                Common.showToast("设置成功", baseBind.deleteStarIllust);
+                Local.setSettings(Shaft.sSettings);
+            }
+        });
+        baseBind.deleteStarIllustRela.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                baseBind.deleteStarIllust.performClick();
             }
         });
 
@@ -335,6 +395,15 @@ public class FragmentSettings extends BaseFragment<FragmentSettingsBinding> {
             }
         });
 
+        baseBind.fileNameRela.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(mContext, TemplateActivity.class);
+                intent.putExtra(TemplateActivity.EXTRA_FRAGMENT, "修改命名方式");
+                startActivity(intent);
+            }
+        });
+
         baseBind.themeMode.setText(Shaft.sSettings.getThemeType());
         baseBind.themeModeRela.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -369,12 +438,6 @@ public class FragmentSettings extends BaseFragment<FragmentSettingsBinding> {
         });
         baseBind.refreshLayout.setRefreshHeader(new FalsifyHeader(mContext));
         baseBind.refreshLayout.setRefreshFooter(new FalsifyFooter(mContext));
-
-//        baseBind.fullscreenLayout.setChecked(Shaft.sSettings.isFullscreenLayout());
-//        baseBind.fullscreenLayout.setOnCheckedChangeListener((buttonView, isChecked) -> {
-//            Shaft.sSettings.setFullscreenLayout(isChecked);
-//            Local.setSettings(Shaft.sSettings);
-//        });
     }
 
     private void animate(LinearLayout linearLayout) {
@@ -442,13 +505,7 @@ public class FragmentSettings extends BaseFragment<FragmentSettingsBinding> {
     }
 
     @Override
-    public void onDestroyView() {
-        if (shouldRefreshFragmentRight != Shaft.sSettings.isDoubleStaggerData()) {
-            Channel channel = new Channel();
-            channel.setReceiver("FragmentRight");
-            EventBus.getDefault().post(channel);
-        }
-
-        super.onDestroyView();
+    public SmartRefreshLayout getSmartRefreshLayout() {
+        return baseBind.refreshLayout;
     }
 }

@@ -70,7 +70,9 @@
     <string name="one_item_added">1个项目已加入下载队列</string>
     <string name="type_illust">插画</string>
     <string name="type_manga">漫画</string>
+    <string name="type_walk_through">画廊</string>
     <string name="type_novel">小说</string>
+    <string name="type_live">直播</string>
     <string name="public_like_illust">公开收藏</string>
     <string name="private_like_illust">私人收藏</string>
     <string name="public_like_user">公开关注</string>
@@ -125,7 +127,9 @@
     <string name="open_direct_connection">开启直连（自行代理或在墙外，可以关闭）</string>
     <string name="see_pixiv_ez">详见 Notsfsssf/Pix-EzViewer</string>
     <string name="show_original_image">图片详情展示原图</string>
+    <string name="delete_star_illust">搜索结果过滤已收藏</string>
     <string name="save_view_history">保存浏览历史</string>
+    <string name="single_download_task">保持一个任务在下载中（保证下载顺序）</string>
     <string name="double_stagger_data">动态页面双列瀑布流</string>
     <string name="show_like_button">列表页展示收藏按钮</string>
     <string name="slide_down_endless">相关作品无限下滑（可能出现重复）</string>
@@ -133,6 +137,8 @@
     <string name="search_result_filter">搜索结果收藏量筛选</string>
     <string name="language">语言</string>
     <string name="theme_mode">主题模式</string>
+    <string name="custom_file_name">自定义下载文件名</string>
+    <string name="illust_detail">作品详情使用新界面</string>
     <string name="file_name_type">文件命名格式</string>
     <string name="download_path">下载路径</string>
     <string name="illust_download_path">图片下载路径</string>

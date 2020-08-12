@@ -13,10 +13,14 @@
         android:background="#000339"
         android:layout_height="match_parent">
 
+
         <androidx.recyclerview.widget.RecyclerView
-            android:layout_width="match_parent"
             android:id="@+id/view_pager"
-            android:layout_height="match_parent">
+            android:layout_width="match_parent"
+            android:scrollbarThumbVertical="@color/white"
+            android:scrollbarAlwaysDrawVerticalTrack="true"
+            android:layout_height="match_parent"
+            android:scrollbars="vertical">
 
         </androidx.recyclerview.widget.RecyclerView>
 
@@ -248,6 +252,17 @@
 
         </com.skydoves.transformationlayout.TransformationLayout>
 
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/trans"
+            android:fitsSystemWindows="true"
+            android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
+            app:popupTheme="@style/Theme.AppCompat.Light.DarkActionBar">
+
+        </androidx.appcompat.widget.Toolbar>
 
     </RelativeLayout>
 </layout>

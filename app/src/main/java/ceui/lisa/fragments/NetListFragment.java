@@ -1,9 +1,12 @@
 package ceui.lisa.fragments;
 
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
 import android.text.TextUtils;
 import android.view.View;
 
 import androidx.databinding.ViewDataBinding;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.scwang.smartrefresh.layout.footer.ClassicsFooter;
 import com.scwang.smartrefresh.layout.footer.FalsifyFooter;
@@ -11,10 +14,19 @@ import com.scwang.smartrefresh.layout.footer.FalsifyFooter;
 import java.util.List;
 
 import ceui.lisa.R;
+import ceui.lisa.adapters.BaseAdapter;
+import ceui.lisa.adapters.EventAdapter;
+import ceui.lisa.adapters.IAdapter;
+import ceui.lisa.adapters.NAdapter;
+import ceui.lisa.adapters.SimpleUserAdapter;
+import ceui.lisa.adapters.UAdapter;
 import ceui.lisa.core.RemoteRepo;
 import ceui.lisa.http.NullCtrl;
 import ceui.lisa.interfaces.ListShow;
+import ceui.lisa.models.Starable;
+import ceui.lisa.notification.CommonReceiver;
 import ceui.lisa.utils.Common;
+import ceui.lisa.utils.Params;
 
 /**
  * 联网获取xx列表，
@@ -28,6 +40,7 @@ public abstract class NetListFragment<Layout extends ViewDataBinding,
 
     protected RemoteRepo<Response> mRemoteRepo;
     protected Response mResponse;
+    protected BroadcastReceiver mReceiver = null;
 
     @Override
     public void fresh() {
@@ -74,9 +87,7 @@ public abstract class NetListFragment<Layout extends ViewDataBinding,
                 }
             });
         } else {
-            if (className.equals("FragmentRecmdIllust ")) {
-                showDataBase();
-            }
+            showDataBase();
         }
     }
 
@@ -125,5 +136,36 @@ public abstract class NetListFragment<Layout extends ViewDataBinding,
 
     public void onResponse(Response response) {
 
+    }
+
+    @Override
+    public void onAdapterPrepared() {
+        super.onAdapterPrepared();
+
+        //注册本地广播
+        if (mAdapter instanceof IAdapter || mAdapter instanceof EventAdapter) {
+            IntentFilter intentFilter = new IntentFilter();
+            mReceiver = new CommonReceiver((BaseAdapter<Starable, ?>) mAdapter);
+            intentFilter.addAction(Params.LIKED_ILLUST);
+            LocalBroadcastManager.getInstance(mContext).registerReceiver(mReceiver, intentFilter);
+        } else if (mAdapter instanceof UAdapter || mAdapter instanceof SimpleUserAdapter) {
+            IntentFilter intentFilter = new IntentFilter();
+            mReceiver = new CommonReceiver((BaseAdapter<Starable, ?>) mAdapter);
+            intentFilter.addAction(Params.LIKED_USER);
+            LocalBroadcastManager.getInstance(mContext).registerReceiver(mReceiver, intentFilter);
+        } else if (mAdapter instanceof NAdapter) {
+            IntentFilter intentFilter = new IntentFilter();
+            mReceiver = new CommonReceiver((BaseAdapter<Starable, ?>) mAdapter);
+            intentFilter.addAction(Params.LIKED_NOVEL);
+            LocalBroadcastManager.getInstance(mContext).registerReceiver(mReceiver, intentFilter);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mReceiver != null) {
+            LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mReceiver);
+        }
     }
 }

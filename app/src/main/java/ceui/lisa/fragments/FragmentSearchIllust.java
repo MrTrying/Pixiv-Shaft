@@ -7,10 +7,13 @@ import androidx.databinding.ViewDataBinding;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import java.util.List;
+
 import ceui.lisa.activities.Shaft;
 import ceui.lisa.adapters.BaseAdapter;
 import ceui.lisa.adapters.IAdapter;
 import ceui.lisa.core.BaseRepo;
+import ceui.lisa.core.FilterMapper;
 import ceui.lisa.core.RemoteRepo;
 import ceui.lisa.databinding.FragmentBaseListBinding;
 import ceui.lisa.http.Retro;
@@ -19,6 +22,7 @@ import ceui.lisa.models.IllustsBean;
 import ceui.lisa.utils.PixivOperate;
 import ceui.lisa.viewmodel.SearchModel;
 import io.reactivex.Observable;
+import io.reactivex.functions.Function;
 
 public class FragmentSearchIllust extends NetListFragment<FragmentBaseListBinding, ListIllust,
         IllustsBean> {
@@ -38,10 +42,7 @@ public class FragmentSearchIllust extends NetListFragment<FragmentBaseListBindin
     }
 
     public static FragmentSearchIllust newInstance() {
-        Bundle args = new Bundle();
-        FragmentSearchIllust fragment = new FragmentSearchIllust();
-        fragment.setArguments(args);
-        return fragment;
+        return new FragmentSearchIllust();
     }
 
     @Override
@@ -67,6 +68,11 @@ public class FragmentSearchIllust extends NetListFragment<FragmentBaseListBindin
             @Override
             public Observable<ListIllust> initNextApi() {
                 return Retro.getAppApi().getNextIllust(token(), mModel.getNextUrl());
+            }
+
+            @Override
+            public Function<ListIllust, ListIllust> mapper() {
+                return new FilterMapper();
             }
         };
     }

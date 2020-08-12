@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 import ceui.lisa.interfaces.OnItemClickListener;
+import ceui.lisa.models.Starable;
 import ceui.lisa.utils.Common;
 
 public abstract class BaseAdapter<Item, BindView extends ViewDataBinding> extends
@@ -98,5 +99,37 @@ public abstract class BaseAdapter<Item, BindView extends ViewDataBinding> extend
                         false
                 )
         );
+    }
+
+    public Item getItemAt(int index) {
+        if (index < allIllust.size()) {
+            return allIllust.get(index);
+        }
+        return null;
+    }
+
+    public void setLiked(int id, boolean isLike) {
+        if (id == 0) {
+            return;
+        }
+
+        if (allIllust == null || allIllust.size() == 0) {
+            return;
+        }
+
+        for (int i = 0; i < allIllust.size(); i++) {
+            if (allIllust.get(i) instanceof Starable) {
+                if (((Starable) allIllust.get(i)).getItemID() == id) {
+                    //设置这个作品为已收藏状态
+                    ((Starable) allIllust.get(i)).setItemStared(isLike);
+                    if (headerSize() != 0) {//如果有header
+                        notifyItemChanged(i + headerSize());
+                    } else { //没有header
+                        notifyItemChanged(i);
+                    }
+                    break;
+                }
+            }
+        }
     }
 }

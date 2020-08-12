@@ -29,7 +29,7 @@ public class TokenInterceptor implements Interceptor {
 
         if (isTokenExpired(response)) {
             response.close();
-            String newToken = getNewToken();
+            String newToken = getNewToken(request.header("Authorization"));
             Request newRequest = chain.request()
                     .newBuilder()
                     .header("Authorization", newToken)
@@ -52,32 +52,36 @@ public class TokenInterceptor implements Interceptor {
     }
 
     /**
-     * 同步请求方式，获取最新的Token
+     * 同步请求方式，获取最新的Token，解决多并发请求多次刷新token的问题
      *
      * @return
      */
-    private String getNewToken() throws IOException {
-        UserModel userModel = Local.getUser();
-        Call<UserModel> call = Retro.getAccountApi().refreshToken(
-                FragmentLogin.CLIENT_ID,
-                FragmentLogin.CLIENT_SECRET,
-                FragmentLogin.REFRESH_TOKEN,
-                userModel.getResponse().getRefresh_token(),
-                userModel.getResponse().getDevice_token(),
-                Boolean.TRUE,
-                Boolean.TRUE);
-        UserModel newUser = call.execute().body();
-        if (newUser != null) {
-            newUser.getResponse().getUser().setPassword(
-                    Shaft.sUserModel.getResponse().getUser().getPassword()
-            );
-            newUser.getResponse().getUser().setIs_login(true);
-        }
-        Local.saveUser(newUser);
-        if (newUser != null && newUser.getResponse() != null) {
-            return newUser.getResponse().getAccess_token();
+    private synchronized String getNewToken(String tokenForThisRequest) throws IOException {
+        if (Shaft.sUserModel.getResponse().getAccess_token().equals(tokenForThisRequest)) {
+            UserModel userModel = Local.getUser();
+            Call<UserModel> call = Retro.getAccountApi().refreshToken(
+                    FragmentLogin.CLIENT_ID,
+                    FragmentLogin.CLIENT_SECRET,
+                    FragmentLogin.REFRESH_TOKEN,
+                    userModel.getResponse().getRefresh_token(),
+                    userModel.getResponse().getDevice_token(),
+                    Boolean.TRUE,
+                    Boolean.TRUE);
+            UserModel newUser = call.execute().body();
+            if (newUser != null) {
+                newUser.getResponse().getUser().setPassword(
+                        Shaft.sUserModel.getResponse().getUser().getPassword()
+                );
+                newUser.getResponse().getUser().setIs_login(true);
+            }
+            Local.saveUser(newUser);
+            if (newUser != null && newUser.getResponse() != null) {
+                return newUser.getResponse().getAccess_token();
+            } else {
+                return "ERROR ON GET TOKEN";
+            }
         } else {
-            return "ERROR ON GET TOKEN";
+            return Shaft.sUserModel.getResponse().getAccess_token();
         }
     }
 }

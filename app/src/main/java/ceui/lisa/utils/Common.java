@@ -5,8 +5,11 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -14,6 +17,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -118,7 +122,7 @@ public class Common {
 
     //2成功， 3失败， 4info
     public static <T> void showToast(T t, View view, int type) {
-        QMUITipDialog tipDialog = new QMUITipDialog.Builder(view.getContext())
+        final QMUITipDialog tipDialog = new QMUITipDialog.Builder(view.getContext())
                 .setIconType(type)
                 .setTipWord(String.valueOf(t))
                 .create();
@@ -126,53 +130,52 @@ public class Common {
         view.postDelayed(new Runnable() {
             @Override
             public void run() {
-                tipDialog.dismiss();
+                if(tipDialog.isShowing()) { //check if dialog is showing.
+
+                    //get the Context object that was used to great the dialog
+                    Context context = ((ContextWrapper)tipDialog.getContext()).getBaseContext();
+
+                    //if the Context used here was an activity AND it hasn't been finished or destroyed
+                    //then dismiss it
+                    if(context instanceof Activity) {
+                        if(!((Activity)context).isFinishing() && !((Activity)context).isDestroyed()) {
+                            tipDialog.dismiss();
+                        }
+                    } else {
+                        tipDialog.dismiss();
+                    }
+                }
             }
         }, 1000L);
     }
-//
-//    /**
-//     * 不显示任何icon
-//     */
-//    public static final int ICON_TYPE_NOTHING = 0;
-//    /**
-//     * 显示 Loading 图标
-//     */
-//    public static final int ICON_TYPE_LOADING = 1;
-//    /**
-//     * 显示成功图标
-//     */
-//    public static final int ICON_TYPE_SUCCESS = 2;
-//    /**
-//     * 显示失败图标
-//     */
-//    public static final int ICON_TYPE_FAIL = 3;
-//    /**
-//     * 显示信息图标
-//     */
-//    public static final int ICON_TYPE_INFO = 4;
-//
-//    public static <T> void showToast(T t, View pView, int type) {
-//        final QMUITipDialog tipDialog = new QMUITipDialog.Builder(Shaft.getContext())
-//                .setIconType(type)
-//                .setTipWord(String.valueOf(t))
-//                .create();
-//        tipDialog.show();
-//        pView.postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//                tipDialog.dismiss();
-//            }
-//        }, 1000L);
-//    }
-//
-//    public static <T> void showToast(T t, View pView) {
-//        showToast(t, pView, 2);
-//    }
-//
-//
-//
 
+    public static String getAppVersionCode(Context context) {
+        int versioncode = 0;
+        try {
+            PackageManager pm = context.getPackageManager();
+            PackageInfo pi = pm.getPackageInfo(context.getPackageName(), 0);
+            // versionName = pi.versionName;
+            versioncode = pi.versionCode;
+        } catch (Exception e) {
+            Log.e("VersionInfo", "Exception", e);
+        }
+        return versioncode + "";
+    }
+
+    /**
+     * 返回当前程序版本名
+     */
+    public static String getAppVersionName(Context context) {
+        String versionName=null;
+        try {
+            PackageManager pm = context.getPackageManager();
+            PackageInfo pi = pm.getPackageInfo(context.getPackageName(), 0);
+            versionName = pi.versionName;
+        } catch (Exception e) {
+            Log.e("VersionInfo", "Exception", e);
+        }
+        return versionName;
+    }
 
     public static void success(Context context, String s, View view) {
         QMUITipDialog dialog = new QMUITipDialog.Builder(context)
@@ -236,6 +239,10 @@ public class Common {
             }
         });
         AlertDialog alertDialog = builder.create();
+        Window window = alertDialog.getWindow();
+        if (window != null) {
+            window.setWindowAnimations(R.style.dialog_animation_scale);
+        }
         alertDialog.show();
         alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)
                 .setTextColor(context.getResources().getColor(R.color.colorPrimary));
@@ -272,4 +279,6 @@ public class Common {
         intent.putExtra(Params.USER_ID, userContainer.getUserId());
         context.startActivity(intent);
     }
+
+
 }

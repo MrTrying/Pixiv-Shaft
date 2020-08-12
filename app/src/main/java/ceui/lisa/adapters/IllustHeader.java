@@ -6,21 +6,19 @@ import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 
-import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.PagerSnapHelper;
-import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
+import java.util.UUID;
 
 import ceui.lisa.activities.RankActivity;
-import ceui.lisa.activities.ViewPagerActivity;
-import ceui.lisa.adapters.RAdapter;
-import ceui.lisa.adapters.ViewHolder;
+import ceui.lisa.activities.VActivity;
+import ceui.lisa.core.PageData;
 import ceui.lisa.databinding.RecyRecmdHeaderBinding;
 import ceui.lisa.models.IllustsBean;
-import ceui.lisa.utils.DataChannel;
+import ceui.lisa.core.Container;
 import ceui.lisa.utils.DensityUtil;
+import ceui.lisa.utils.Params;
 import ceui.lisa.view.LinearItemHorizontalDecoration;
 
 public class IllustHeader extends ViewHolder<RecyRecmdHeaderBinding> {
@@ -36,9 +34,13 @@ public class IllustHeader extends ViewHolder<RecyRecmdHeaderBinding> {
         baseBind.topRela.startAnimation(animation);
         RAdapter adapter = new RAdapter(illustsBeans, context);
         adapter.setOnItemClickListener((v, position, viewType) -> {
-            DataChannel.get().setIllustList(illustsBeans);
-            Intent intent = new Intent(context, ViewPagerActivity.class);
-            intent.putExtra("position", position);
+            final String uuid = UUID.randomUUID().toString();
+            final PageData pageData = new PageData(uuid, illustsBeans);
+            Container.get().addPageToMap(pageData);
+
+            Intent intent = new Intent(context, VActivity.class);
+            intent.putExtra(Params.POSITION, position);
+            intent.putExtra(Params.PAGE_UUID, uuid);
             context.startActivity(intent);
         });
         baseBind.ranking.setAdapter(adapter);

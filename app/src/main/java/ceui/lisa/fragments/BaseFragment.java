@@ -1,8 +1,10 @@
 package ceui.lisa.fragments;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,6 +32,7 @@ public abstract class BaseFragment<Layout extends ViewDataBinding> extends Fragm
     protected String className = getClass().getSimpleName() + " ";
     protected Layout baseBind;
     protected View parentView;
+    protected Handler mainHandler;
     protected boolean isVertical = true;
 
     public BaseFragment() {
@@ -40,6 +43,8 @@ public abstract class BaseFragment<Layout extends ViewDataBinding> extends Fragm
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mainHandler = new Handler();
+
         mContext = requireContext();
         mActivity = requireActivity();
 
@@ -47,6 +52,15 @@ public abstract class BaseFragment<Layout extends ViewDataBinding> extends Fragm
         if (bundle != null) {
             initBundle(bundle);
         }
+
+        Intent intent = mActivity.getIntent();
+        if (intent != null) {
+            Bundle activityBundle = intent.getExtras();
+            if (activityBundle != null) {
+                initActivityBundle(bundle);
+            }
+        }
+
 
         if (eventBusEnable()) {
             EventBus.getDefault().register(this);
@@ -61,11 +75,16 @@ public abstract class BaseFragment<Layout extends ViewDataBinding> extends Fragm
         }
     }
 
+    public void initActivityBundle(Bundle bundle) {
+
+    }
+
     @Override
     public void onDestroy() {
         if (eventBusEnable()) {
             EventBus.getDefault().unregister(this);
         }
+        mainHandler = null;
         super.onDestroy();
     }
 
@@ -78,7 +97,11 @@ public abstract class BaseFragment<Layout extends ViewDataBinding> extends Fragm
         if (parentView == null) {
             initLayout();
             baseBind = DataBindingUtil.inflate(inflater, mLayoutID, container, false);
-            parentView = baseBind.getRoot();
+            if (baseBind != null) {
+                parentView = baseBind.getRoot();
+            } else {
+                parentView = inflater.inflate(mLayoutID, container, false);
+            }
             initView(parentView);
             initData();
         } else {
@@ -132,7 +155,6 @@ public abstract class BaseFragment<Layout extends ViewDataBinding> extends Fragm
 
     public void handleEvent(Channel channel) {
     }
-
 
     public void horizon() {
 

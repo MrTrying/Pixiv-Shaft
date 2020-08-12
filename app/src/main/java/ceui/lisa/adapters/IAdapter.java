@@ -1,6 +1,5 @@
 package ceui.lisa.adapters;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
@@ -11,7 +10,6 @@ import android.widget.PopupWindow;
 
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
@@ -19,33 +17,28 @@ import com.qmuiteam.qmui.util.QMUIDisplayHelper;
 import com.qmuiteam.qmui.widget.popup.QMUIPopup;
 import com.qmuiteam.qmui.widget.popup.QMUIPopups;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import ceui.lisa.R;
 import ceui.lisa.activities.Shaft;
 import ceui.lisa.activities.TemplateActivity;
-import ceui.lisa.activities.ViewPagerActivity;
+import ceui.lisa.activities.VActivity;
+import ceui.lisa.core.PageData;
+import ceui.lisa.core.TimeRecord;
 import ceui.lisa.databinding.RecyIllustStaggerBinding;
 import ceui.lisa.dialogs.MuteDialog;
 import ceui.lisa.fragments.FragmentLikeIllust;
-import ceui.lisa.http.NullCtrl;
-import ceui.lisa.http.Retro;
 import ceui.lisa.interfaces.MultiDownload;
 import ceui.lisa.interfaces.OnItemClickListener;
-import ceui.lisa.model.ListIllust;
 import ceui.lisa.models.IllustsBean;
 import ceui.lisa.utils.Common;
-import ceui.lisa.utils.DataChannel;
+import ceui.lisa.core.Container;
 import ceui.lisa.utils.GlideUtil;
 import ceui.lisa.utils.Params;
 import ceui.lisa.utils.PixivOperate;
-import io.reactivex.Scheduler;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 
-import static ceui.lisa.activities.Shaft.sUserModel;
 import static com.bumptech.glide.request.RequestOptions.bitmapTransform;
 
 public class IAdapter extends BaseAdapter<IllustsBean, RecyIllustStaggerBinding> implements MultiDownload {
@@ -85,48 +78,8 @@ public class IAdapter extends BaseAdapter<IllustsBean, RecyIllustStaggerBinding>
         }
         bindView.baseBind.illustImage.setLayoutParams(params);
 
-        if (showLikeButton) {
-            bindView.baseBind.likeButton.setVisibility(View.VISIBLE);
-            if (target.isIs_bookmarked()) {
-                bindView.baseBind.likeButton.setImageTintList(
-                        ColorStateList.valueOf(ContextCompat.getColor(mContext, R.color.has_bookmarked)));
-            } else {
-                bindView.baseBind.likeButton.setImageTintList(
-                        ColorStateList.valueOf(ContextCompat.getColor(mContext, R.color.not_bookmarked)));
-            }
-            bindView.baseBind.likeButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (target.isIs_bookmarked()) {
-                        bindView.baseBind.likeButton.setImageTintList(
-                                ColorStateList.valueOf(ContextCompat.getColor(mContext, R.color.not_bookmarked)));
-                    } else {
-                        getRelated(target, position);
-                        bindView.baseBind.likeButton.setImageTintList(
-                                ColorStateList.valueOf(ContextCompat.getColor(mContext, R.color.has_bookmarked)));
-                    }
-                    PixivOperate.postLike(target, sUserModel, FragmentLikeIllust.TYPE_PUBLUC);
-                }
-            });
-            bindView.baseBind.likeButton.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    if (!target.isIs_bookmarked()) {
-                        getRelated(target, position);
-                        Intent intent = new Intent(mContext, TemplateActivity.class);
-                        intent.putExtra(Params.ILLUST_ID, target.getId());
-                        intent.putExtra(TemplateActivity.EXTRA_FRAGMENT, "按标签收藏");
-                        mContext.startActivity(intent);
-                    }
-                    return true;
-                }
-            });
-
-        } else {
-            bindView.baseBind.likeButton.setVisibility(View.GONE);
-        }
-
         if (target.isShield()) {
+            bindView.baseBind.likeButton.setVisibility(View.GONE);
             bindView.baseBind.hide.setVisibility(View.VISIBLE);
             Glide.with(mContext)
                     .load(GlideUtil.getMediumImg(target))
@@ -134,6 +87,45 @@ public class IAdapter extends BaseAdapter<IllustsBean, RecyIllustStaggerBinding>
                     .transition(DrawableTransitionOptions.withCrossFade())
                     .into(bindView.baseBind.illustImage);
         } else {
+            if (showLikeButton) {
+                bindView.baseBind.likeButton.setVisibility(View.VISIBLE);
+                if (target.isIs_bookmarked()) {
+                    bindView.baseBind.likeButton.setImageTintList(
+                            ColorStateList.valueOf(ContextCompat.getColor(mContext, R.color.has_bookmarked)));
+                } else {
+                    bindView.baseBind.likeButton.setImageTintList(
+                            ColorStateList.valueOf(ContextCompat.getColor(mContext, R.color.not_bookmarked)));
+                }
+                bindView.baseBind.likeButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (target.isIs_bookmarked()) {
+                            bindView.baseBind.likeButton.setImageTintList(
+                                    ColorStateList.valueOf(ContextCompat.getColor(mContext, R.color.not_bookmarked)));
+                        } else {
+                            bindView.baseBind.likeButton.setImageTintList(
+                                    ColorStateList.valueOf(ContextCompat.getColor(mContext, R.color.has_bookmarked)));
+                        }
+                        PixivOperate.postLike(target, FragmentLikeIllust.TYPE_PUBLUC);
+                    }
+                });
+                bindView.baseBind.likeButton.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        if (!target.isIs_bookmarked()) {
+                            Intent intent = new Intent(mContext, TemplateActivity.class);
+                            intent.putExtra(Params.ILLUST_ID, target.getId());
+                            intent.putExtra(TemplateActivity.EXTRA_FRAGMENT, "按标签收藏");
+                            mContext.startActivity(intent);
+                        }
+                        return true;
+                    }
+                });
+
+            } else {
+                bindView.baseBind.likeButton.setVisibility(View.GONE);
+            }
+
             bindView.baseBind.hide.setVisibility(View.INVISIBLE);
             Glide.with(mContext)
                     .load(GlideUtil.getMediumImg(target))
@@ -182,10 +174,6 @@ public class IAdapter extends BaseAdapter<IllustsBean, RecyIllustStaggerBinding>
         });
     }
 
-    public void getRelated(IllustsBean illust, int position) {
-
-    }
-
     @Override
     public Context getContext() {
         return mContext;
@@ -200,12 +188,16 @@ public class IAdapter extends BaseAdapter<IllustsBean, RecyIllustStaggerBinding>
         setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(View v, int position, int viewType) {
-                DataChannel.get().setIllustList(allIllust);
-                Intent intent = new Intent(mContext, ViewPagerActivity.class);
-                intent.putExtra("position", position);
+                TimeRecord.start();
+
+                final String uuid = UUID.randomUUID().toString();
+                final PageData pageData = new PageData(uuid, allIllust);
+                Container.get().addPageToMap(pageData);
+
+                Intent intent = new Intent(mContext, VActivity.class);
+                intent.putExtra(Params.POSITION, position);
+                intent.putExtra(Params.PAGE_UUID, uuid);
                 mContext.startActivity(intent);
-//                ((Activity)mContext).overridePendingTransition(R.anim.zoom_enter,
-//                        R.anim.zoom_exit);
             }
         });
     }

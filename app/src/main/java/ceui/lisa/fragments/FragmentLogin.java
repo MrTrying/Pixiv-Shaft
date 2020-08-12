@@ -31,6 +31,7 @@ import ceui.lisa.http.NullCtrl;
 import ceui.lisa.http.Retro;
 import ceui.lisa.models.SignResponse;
 import ceui.lisa.models.UserModel;
+import ceui.lisa.utils.Base64Util;
 import ceui.lisa.utils.ClipBoardUtils;
 import ceui.lisa.utils.Common;
 import ceui.lisa.utils.Dev;
@@ -84,6 +85,14 @@ public class FragmentLogin extends BaseFragment<ActivityLoginBinding> {
                             && userJson.contains(Params.USER_KEY)) {
                         Common.showToast("导入成功", baseBind.toolbar);
                         UserModel exportUser = Shaft.sGson.fromJson(userJson, UserModel.class);
+
+                        String pwd = exportUser.getResponse().getUser().getPassword();
+                        //如果是新版本加密过的,解密一下
+                        if (!TextUtils.isEmpty(pwd) && pwd.startsWith(Params.SECRET_PWD_KEY)) {
+                            String secret = pwd.substring(Params.SECRET_PWD_KEY.length());
+                            String realPwd = Base64Util.decode(secret);
+                            exportUser.getResponse().getUser().setPassword(realPwd);
+                        }
                         Local.saveUser(exportUser);
                         Dev.refreshUser = true;
                         Shaft.sUserModel = exportUser;
@@ -316,7 +325,7 @@ public class FragmentLogin extends BaseFragment<ActivityLoginBinding> {
                         baseBind.progress.setVisibility(View.INVISIBLE);
                         if (isAdded()) {
                             Intent intent = new Intent(mContext, MainActivity.class);
-                            requireActivity().startActivity(intent);
+                            mActivity.startActivity(intent);
                             mActivity.finish();
                         }
                     }

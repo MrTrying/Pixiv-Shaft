@@ -3,25 +3,19 @@ package ceui.lisa.activities;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -29,14 +23,15 @@ import androidx.fragment.app.FragmentPagerAdapter;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.navigation.NavigationView;
+import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import java.io.File;
 
 import ceui.lisa.R;
+import ceui.lisa.base.BaseActivity;
 import ceui.lisa.databinding.ActivityCoverBinding;
 import ceui.lisa.download.TaskQueue;
-import ceui.lisa.fragments.BaseFragment;
-import ceui.lisa.fragments.FragmentCenter;
+import ceui.lisa.fragments.FragmentC;
 import ceui.lisa.fragments.FragmentLeft;
 import ceui.lisa.fragments.FragmentRight;
 import ceui.lisa.utils.Common;
@@ -46,6 +41,7 @@ import ceui.lisa.utils.Local;
 import ceui.lisa.utils.Params;
 import ceui.lisa.utils.ReverseImage;
 import ceui.lisa.utils.ReverseWebviewCallback;
+import io.reactivex.disposables.Disposable;
 
 import static ceui.lisa.activities.Shaft.sUserModel;
 
@@ -59,7 +55,7 @@ public class MainActivity extends BaseActivity<ActivityCoverBinding>
     private TextView username;
     private TextView user_email;
     private long mExitTime;
-    private BaseFragment<?>[] baseFragments = null;
+    private Fragment[] baseFragments = null;
 
     @Override
     protected int initLayout() {
@@ -90,9 +86,9 @@ public class MainActivity extends BaseActivity<ActivityCoverBinding>
     }
 
     private void initFragment() {
-        baseFragments = new BaseFragment[]{
+        baseFragments = new Fragment[]{
                 new FragmentLeft(),
-                new FragmentCenter(),
+                new FragmentC(),
                 new FragmentRight()
         };
         baseBind.viewPager.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
@@ -112,7 +108,19 @@ public class MainActivity extends BaseActivity<ActivityCoverBinding>
     @Override
     protected void initData() {
         if (sUserModel != null && sUserModel.getResponse().getUser().isIs_login()) {
-            initFragment();
+            final RxPermissions rxPermissions = new RxPermissions(mActivity);
+            Disposable disposable = rxPermissions
+                    .requestEachCombined(
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    )
+                    .subscribe(permission -> {
+                        if (permission.granted) {
+                            initFragment();
+                        } else {
+                            Common.showToast(mActivity.getString(R.string.access_denied));
+                            finish();
+                        }
+                    });
         } else {
             Intent intent = new Intent(mContext, TemplateActivity.class);
             intent.putExtra(TemplateActivity.EXTRA_FRAGMENT, "登录注册");
@@ -159,46 +167,7 @@ public class MainActivity extends BaseActivity<ActivityCoverBinding>
                 intent.putExtra(Params.USER_ID, sUserModel.getResponse().getUser().getId());
                 break;
             case R.id.nav_reverse:
-                // TODO: 20-3-16 国际化 向用户索要权限
-                if (Shaft.sSettings.isReverseDialogNeverShowAgain()) {
-                    selectPhoto();
-                } else {
-                    CheckBox checkBox = new CheckBox(this);
-                    checkBox.setText(R.string.never_show_again);
-                    checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                        @Override
-                        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                            Shaft.sSettings.setReverseDialogNeverShowAgain(isChecked);
-                            Local.setSettings(Shaft.sSettings);
-                        }
-                    });
-                    new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("关于以图搜源")
-                            .setMessage("以图搜源的实质是将你选择的图片上传至 https://saucenao.com/ 进行搜索\n" +
-                                    "https://saucenao.com/ 可以算一个专门查找P站图的网站，更多信息不在这里介绍\n" +
-                                    "注意：该功能需要 READ_EXTERNAL_STORAGE 以读取图片，如果 SDK >= 23 且没有授权" +
-                                    "则功能无法实现")
-                            .setView(checkBox)
-                            .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                    String[] permissions = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
-                                    int i = ContextCompat.checkSelfPermission(this, permissions[0]);
-                                    if (i != PackageManager.PERMISSION_GRANTED) {
-                                        ActivityCompat.requestPermissions(this, permissions, 1);
-                                    } else {
-                                        selectPhoto();
-                                    }
-                                } else {
-                                    selectPhoto();
-                                }
-                            })
-                            .setNegativeButton(android.R.string.cancel, null)
-                            .show();
-                }
-                break;
-            case R.id.nav_send:
-                intent = new Intent(mContext, TemplateActivity.class);
-                intent.putExtra(TemplateActivity.EXTRA_FRAGMENT, "画廊");
+                selectPhoto();
                 break;
             case R.id.nav_new_work:
                 intent = new Intent(mContext, TemplateActivity.class);

@@ -2,8 +2,6 @@ package ceui.lisa.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.text.Editable;
 import android.text.Html;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -13,18 +11,14 @@ import android.text.style.ClickableSpan;
 import android.view.View;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.Target;
-
-import org.sufficientlysecure.htmltextview.HtmlAssetsImageGetter;
-import org.sufficientlysecure.htmltextview.HtmlHttpImageGetter;
-import org.sufficientlysecure.htmltextview.HtmlHttpImageGetter.UrlDrawable;
-import org.xml.sax.XMLReader;
 
 import java.util.List;
 
 import ceui.lisa.R;
+import ceui.lisa.core.ImgGetter;
 import ceui.lisa.databinding.RecyCommentListBinding;
 import ceui.lisa.models.CommentsBean;
+import ceui.lisa.utils.Common;
 import ceui.lisa.utils.Emoji;
 import ceui.lisa.utils.GlideUtil;
 
@@ -51,7 +45,7 @@ public class CommentAdapter extends BaseAdapter<CommentsBean, RecyCommentListBin
         bindView.baseBind.userName.setText(allIllust.get(position).getUser().getName());
         bindView.baseBind.time.setText(allIllust.get(position).getDate());
         bindView.baseBind.content.setHtml(allIllust.get(position).getComment(),
-                new HtmlAssetsImageGetter(bindView.baseBind.content));
+                new ImgGetter(bindView.baseBind.content));
 
         if (allIllust.get(position).getParent_comment() != null &&
                 allIllust.get(position).getParent_comment().getUser() != null) {
@@ -69,10 +63,20 @@ public class CommentAdapter extends BaseAdapter<CommentsBean, RecyCommentListBin
                 }
             };
 
-            SpannableString spannableString = new SpannableString(Html.fromHtml(String.format("@%s：%s",
-                    allIllust.get(position).getParent_comment().getUser().getName(),
-                    allIllust.get(position).getParent_comment().getComment()),
-                    new HtmlAssetsImageGetter(bindView.baseBind.content), null));
+            SpannableString spannableString;
+            //如果getParent_comment是一个包含表情的comment，就用fromHtml
+            if (allIllust.get(position).getParent_comment().getComment().contains("_2sgsdWB")) {
+                Common.showLog("Emoji.hasEmoji true " + position + allIllust.get(position).getParent_comment().getComment());
+                spannableString = new SpannableString(Html.fromHtml(String.format("@%s：%s",
+                        allIllust.get(position).getParent_comment().getUser().getName(),
+                        allIllust.get(position).getParent_comment().getComment()),
+                        new ImgGetter(bindView.baseBind.replyContent), null));
+            } else {
+                Common.showLog("Emoji.hasEmoji false " + position + allIllust.get(position).getParent_comment().getComment());
+                spannableString = new SpannableString(String.format("@%s：%s",
+                        allIllust.get(position).getParent_comment().getUser().getName(),
+                        allIllust.get(position).getParent_comment().getComment()));
+            }
             spannableString.setSpan(clickableSpan,
                     0, allIllust.get(position).getParent_comment().getUser().getName().length() + 1,
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

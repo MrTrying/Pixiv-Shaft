@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
-public class IllustsBean implements Serializable {
+public class IllustsBean implements Serializable, Starable {
     /**
      * id : 73949833
      * title : 命に繋がる魂の絆
@@ -56,7 +56,7 @@ public class IllustsBean implements Serializable {
     private boolean visible;
     private boolean is_muted;
     private List<TagsBean> tags;
-    private List<?> tools;
+    private List<String> tools;
     private List<MetaPagesBean> meta_pages;
     private boolean isShield; //是否被屏蔽
 
@@ -232,11 +232,11 @@ public class IllustsBean implements Serializable {
         this.tags = tags;
     }
 
-    public List<?> getTools() {
+    public List<String> getTools() {
         return tools;
     }
 
-    public void setTools(List<?> tools) {
+    public void setTools(List<String> tools) {
         this.tools = tools;
     }
 
@@ -317,6 +317,26 @@ public class IllustsBean implements Serializable {
         }
 
         return result;
+    }
+
+    @Override
+    public int getItemID() {
+        return getId();
+    }
+
+    @Override
+    public void setItemID(int id) {
+        setId(id);
+    }
+
+    @Override
+    public boolean isItemStared() {
+        return isIs_bookmarked();
+    }
+
+    @Override
+    public void setItemStared(boolean isLike) {
+        setIs_bookmarked(isLike);
     }
 
     public static class MetaPagesBean implements Serializable {
